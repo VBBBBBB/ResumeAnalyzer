@@ -38,7 +38,7 @@ FOOTER_TEXT = """
 </footer>
 """
 
-TITLE = "<h1>📄🔍 ATS Resume Analyzer System</h1>"
+TITLE = "<h1>📄 ATS Resume Analyzer 📄</h1>"
 PLACEHOLDER = "Chat with AI about your resume and job descriptions..."
 
 def extract_text_from_pdf(pdf_file):
