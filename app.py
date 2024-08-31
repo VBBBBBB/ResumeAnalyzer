@@ -55,30 +55,21 @@ def extract_text_from_docx(docx_file):
         text += para.text + "\n"
     return text
 
-def generate_response(message: str, history: list, system_prompt: str, temperature: float = 0.5, max_tokens: int = 512):
+def generate_response(message: str, system_prompt: str, temperature: float = 0.5, max_tokens: int = 512):
     conversation = [
-        {"role": "system", "content": system_prompt}
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": message}
     ]
-    for prompt, answer in history:
-        conversation.extend([
-            {"role": "user", "content": prompt},
-            {"role": "assistant", "content": answer},
-        ])
-    conversation.append({"role": "user", "content": message})
 
     response = client.chat.completions.create(
         model="llama-3.1-8B-Instant",
         messages=conversation,
         temperature=temperature,
         max_tokens=max_tokens,
-        stream=True
+        stream=False
     )
 
-    partial_message = ""
-    for chunk in response:
-        if chunk.choices[0].delta.content is not None:
-            partial_message += chunk.choices[0].delta.content
-            yield partial_message
+    return response.choices[0].message.content
 
 def analyze_resume(resume_text, job_description):
     prompt = f"""
@@ -92,7 +83,7 @@ def analyze_resume(resume_text, job_description):
     Job Description: {job_description}
     Resume: {resume_text}
     """
-    return generate_response(prompt, [], "You are an expert ATS resume analyzer.")
+    return generate_response(prompt, "You are an expert ATS resume analyzer.")
 
 def rephrase_text(text):
     prompt = f"""
@@ -100,7 +91,7 @@ def rephrase_text(text):
 
     Original Text: {text}
     """
-    return generate_response(prompt, [], "You are an expert in rephrasing content for ATS optimization.")
+    return generate_response(prompt, "You are an expert in rephrasing content for ATS optimization.")
 
 def clear_conversation():
     return [], None
@@ -124,10 +115,6 @@ with gr.Blocks(css=CSS, theme="Nymbo/Nymbo_Theme") as demo:
         rephrased_output = gr.Markdown()
 
     with gr.Accordion("⚙️ Parameters", open=False):
-        system_prompt = gr.Textbox(
-            value="You are a helpful ATS resume expert, specialized in resume analysis and optimization.",
-            label="System Prompt",
-        )
         temperature = gr.Slider(
             minimum=0, maximum=1, step=0.1, value=0.5, label="Temperature",
         )
