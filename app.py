@@ -72,7 +72,7 @@ def generate_response(message: str, system_prompt: str, temperature: float, max_
     return response.choices[0].message.content
 
     
-def analyze_resume(resume_text, job_description, temperature, max_tokens):
+def analyze_resume_with_job_description(resume_text, job_description, temperature, max_tokens):
     prompt = f"""
     Please analyze the following resume in the context of the job description provided. Strictly check every single line in the job description and analyze the resume for exact matches. Maintain high ATS standards and give scores only to the correct matches. Focus on missing core skills and soft skills. Provide the following details:
     1. The match percentage of the resume to the job description.
@@ -83,6 +83,31 @@ def analyze_resume(resume_text, job_description, temperature, max_tokens):
     Resume: {resume_text}
     """
     return generate_response(prompt, "You are an expert ATS resume analyzer.", temperature, max_tokens)
+
+def analyze_resume_without_job_description(resume_text, temperature, max_tokens):
+    prompt = f"""
+    Please analyze the following resume without a specific job description. Provide the following details:
+    1. An overall score out of 10 for the resume.
+    2. Suggestions for improvements based on the following criteria:
+       - Impact (quantification, repetition, verb usage, tenses, responsibilities, spelling & consistency)
+       - Brevity (length, bullet points, filler words)
+       - Style (buzzwords, dates, contact details, personal pronouns, active voice, consistency)
+       - Sections (summary, education, skills, unnecessary sections)
+    3. A cumulative assessment of all the above fields.
+    4. Recommendations for improving the resume in 3-4 points with examples.
+
+    Resume: {resume_text}
+    """
+    return generate_response(prompt, "You are an expert ATS resume analyzer.", temperature, max_tokens)
+
+
+def analyze_resume(resume_text, job_description, with_job_description, temperature, max_tokens):
+    if with_job_description:
+        return analyze_resume_with_job_description(resume_text, job_description, temperature, max_tokens)
+    else:
+        return analyze_resume_without_job_description(resume_text, temperature, max_tokens)
+
+
 
 def rephrase_text(text, temperature, max_tokens):
     prompt = f"""
@@ -100,6 +125,7 @@ with gr.Blocks(css=CSS, theme="Nymbo/Nymbo_Theme") as demo:
     with gr.Tab("Resume Analyzer"):
         with gr.Row():
             with gr.Column():
+                with_job_description = gr.Checkbox(label="Analyze with Job Description", value=True)
                 job_description = gr.Textbox(label="Job Description", lines=5)
                 resume_file = gr.File(label="Upload Resume (PDF or DOCX)")
             with gr.Column():
@@ -119,7 +145,14 @@ with gr.Blocks(css=CSS, theme="Nymbo/Nymbo_Theme") as demo:
         max_tokens = gr.Slider(
             minimum=50, maximum=1024, step=1, value=512, label="Max tokens",
         )
+    def update_job_description_visibility(with_job_description):
+        return gr.update(visible=with_job_description)
 
+    with_job_description.change(
+        update_job_description_visibility,
+        inputs=[with_job_description],
+        outputs=[job_description]
+    )
     def process_resume(file):
         if file is not None:
             file_type = file.name.split('.')[-1].lower()
@@ -133,7 +166,7 @@ with gr.Blocks(css=CSS, theme="Nymbo/Nymbo_Theme") as demo:
 
     analyze_btn.click(
         analyze_resume,
-        inputs=[resume_content, job_description, temperature, max_tokens],
+        inputs=[resume_content, job_description, with_job_description, temperature, max_tokens],
         outputs=[output]
     )
 
