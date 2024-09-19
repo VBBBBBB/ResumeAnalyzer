@@ -38,6 +38,20 @@ FOOTER_TEXT = """
 </footer>
 """
 
+COVER_LETTER_DISCLAIMER = """
+<p style="font-style: italic; color: #888;">
+Disclaimer: This cover letter is generated based on the provided job description and resume. 
+It should be carefully reviewed and tailored to your specific needs and the company's requirements before use.
+</p>
+"""
+
+INTERVIEW_QUESTIONS_DISCLAIMER = """
+<p style="font-style: italic; color: #888;">
+Disclaimer: These interview questions are generated based on the provided job description. 
+They should be reviewed and adjusted to better fit the specific role, company culture, and interview process.
+</p>
+"""
+
 TITLE = "<h1>📄 ATS Resume Analyzer 📄</h1>"
 PLACEHOLDER = "Chat with AI about your resume and job descriptions..."
 
@@ -119,6 +133,34 @@ def rephrase_text(text, temperature, max_tokens):
 def clear_conversation():
     return [], None
 
+
+def generate_cover_letter(resume_text, job_description, temperature, max_tokens):
+    prompt = f"""
+    Using the provided resume and job description, create a compelling cover letter. The cover letter should:
+    1. Be tailored to the specific job and company.
+    2. Highlight relevant skills and experiences from the resume.
+    3. Show enthusiasm for the role and company.
+    4. Be professional and concise (about 250-300 words).
+
+    Resume: {resume_text}
+    Job Description: {job_description}
+    """
+    return generate_response(prompt, "You are an expert in writing tailored cover letters.", temperature, max_tokens)
+
+def generate_interview_questions(job_description, temperature, max_tokens):
+    prompt = f"""
+    Based on the following job description, generate a list of 10 probable interview questions. Include a mix of:
+    1. Role-specific technical questions (if applicable)
+    2. Behavioral questions related to the required skills
+    3. Questions about the candidate's experience and background
+    4. Questions to assess cultural fit
+
+    Ensure the questions are tailored to the specific job role and requirements.
+
+    Job Description: {job_description}
+    """
+    return generate_response(prompt, "You are an expert in creating relevant interview questions based on job descriptions.", temperature, max_tokens)
+
 with gr.Blocks(css=CSS, theme="Nymbo/Nymbo_Theme") as demo:
     gr.HTML(TITLE)
 
@@ -138,6 +180,25 @@ with gr.Blocks(css=CSS, theme="Nymbo/Nymbo_Theme") as demo:
         rephrase_btn = gr.Button("Rephrase")
         rephrased_output = gr.Markdown()
 
+    with gr.Tab("Cover Letter Generator"):
+        gr.HTML(COVER_LETTER_DISCLAIMER)
+        with gr.Row():
+            with gr.Column():
+                cl_job_description = gr.Textbox(label="Job Description", lines=5)
+                cl_resume_content = gr.Textbox(label="Resume Content", lines=10)
+            with gr.Column():
+                generate_cl_btn = gr.Button("Generate Cover Letter")
+                cover_letter_output = gr.Markdown()
+
+    with gr.Tab("Interview Questions"):
+        gr.HTML(INTERVIEW_QUESTIONS_DISCLAIMER)
+        with gr.Row():
+            with gr.Column():
+                iq_job_description = gr.Textbox(label="Job Description", lines=5)
+            with gr.Column():
+                generate_iq_btn = gr.Button("Generate Interview Questions")
+                interview_questions_output = gr.Markdown()
+
     with gr.Accordion("⚙️ Parameters", open=False):
         temperature = gr.Slider(
             minimum=0, maximum=1, step=0.1, value=0.5, label="Temperature",
@@ -145,6 +206,7 @@ with gr.Blocks(css=CSS, theme="Nymbo/Nymbo_Theme") as demo:
         max_tokens = gr.Slider(
             minimum=50, maximum=1024, step=1, value=512, label="Max tokens",
         )
+        
     def update_job_description_visibility(with_job_description):
         return gr.update(visible=with_job_description)
 
