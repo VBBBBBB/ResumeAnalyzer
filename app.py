@@ -52,6 +52,36 @@ They should be reviewed and adjusted to better fit the specific role, company cu
 </p>
 """
 
+RESUME_ANALYZER_INSTRUCTIONS = """
+<div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-bottom: 10px;">
+    <p><strong>Instructions:</strong></p>
+    <ul>
+        <li>Upload your resume (PDF or DOCX) in the file upload area.</li>
+        <li>If you want to analyze your resume against a specific job description, keep the checkbox checked and enter the job description in the text box.</li>
+        <li>If you want a general resume analysis without a job description, uncheck the "Analyze with Job Description" box.</li>
+        <li>Click "Analyze Resume" to get your results.</li>
+    </ul>
+</div>
+"""
+
+COVER_LETTER_INSTRUCTIONS = """
+<div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-bottom: 10px;">
+    <p><strong>Instructions for Cover Letter Generation:</strong></p>
+    <ol>
+        <li>First, go to the "Resume Analyzer" tab.</li>
+        <li>Upload your resume and enter the job description there.</li>
+        <li>Then, come back to this tab and click "Generate Cover Letter".</li>
+    </ol>
+</div>
+"""
+
+INTERVIEW_QUESTIONS_INSTRUCTIONS = """
+<div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-bottom: 10px;">
+    <p><strong>Instructions for Interview Questions Generation:</strong></p>
+    <p>Enter the job description in the text box below and click "Generate Interview Questions".</p>
+</div>
+"""
+
 TITLE = "<h1>📄 ATS Resume Analyzer 📄</h1>"
 PLACEHOLDER = "Chat with AI about your resume and job descriptions..."
 
@@ -165,9 +195,14 @@ with gr.Blocks(css=CSS, theme="Nymbo/Nymbo_Theme") as demo:
     gr.HTML(TITLE)
 
     with gr.Tab("Resume Analyzer"):
+        gr.HTML(RESUME_ANALYZER_INSTRUCTIONS)
         with gr.Row():
             with gr.Column():
-                with_job_description = gr.Checkbox(label="Analyze with Job Description", value=True)
+                with_job_description = gr.Checkbox(
+                    label="Analyze with Job Description",
+                    value=True,
+                    info="Uncheck this box for a general resume analysis without a specific job description."
+                )
                 job_description = gr.Textbox(label="Job Description", lines=5)
                 resume_file = gr.File(label="Upload Resume (PDF or DOCX)")
             with gr.Column():
@@ -181,12 +216,15 @@ with gr.Blocks(css=CSS, theme="Nymbo/Nymbo_Theme") as demo:
         rephrased_output = gr.Markdown()
 
     with gr.Tab("Cover Letter Generator"):
+        gr.HTML(COVER_LETTER_INSTRUCTIONS)
         gr.HTML(COVER_LETTER_DISCLAIMER)
         generate_cl_btn = gr.Button("Generate Cover Letter")
         cover_letter_output = gr.Markdown()
 
     with gr.Tab("Interview Questions Generator"):
+        gr.HTML(INTERVIEW_QUESTIONS_INSTRUCTIONS)
         gr.HTML(INTERVIEW_QUESTIONS_DISCLAIMER)
+        interview_job_description = gr.Textbox(label="Job Description for Interview Questions", lines=5)
         generate_iq_btn = gr.Button("Generate Interview Questions")
         interview_questions_output = gr.Markdown()
 
@@ -238,7 +276,7 @@ with gr.Blocks(css=CSS, theme="Nymbo/Nymbo_Theme") as demo:
 
     generate_iq_btn.click(
         generate_interview_questions,
-        inputs=[job_description, temperature, max_tokens],
+        inputs=[interview_job_description, temperature, max_tokens],
         outputs=[interview_questions_output]
     )
 
