@@ -2,3 +2,4 @@ gradio
 groq
 PyPDF2
 python-docx
+python-dotenv
