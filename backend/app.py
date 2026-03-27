@@ -1,19 +1,36 @@
 import os
 import tempfile
-from fastapi import FastAPI, File, UploadFile, Form
+from datetime import datetime, timedelta
+from fastapi import FastAPI, File, UploadFile, Form, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from groq import Groq
 from PyPDF2 import PdfReader
 from docx import Document
 from dotenv import load_dotenv
+from jose import JWTError, jwt
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+from pymongo import MongoClient
 
 load_dotenv()
 
 # ─── Configuration ────────────────────────────────────────────────────────────
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-client = Groq(api_key=GROQ_API_KEY)
+GROQ_API_KEY      = os.getenv("GROQ_API_KEY")
+MONGO_URI         = os.getenv("MONGO_URI")
+GOOGLE_CLIENT_ID  = os.getenv("GOOGLE_CLIENT_ID")
+JWT_SECRET        = os.getenv("JWT_SECRET", "fallback_secret")
+JWT_ALGORITHM     = os.getenv("JWT_ALGORITHM", "HS256")
+JWT_EXPIRE_HOURS  = int(os.getenv("JWT_EXPIRE_HOURS", "72"))
+
+groq_client = Groq(api_key=GROQ_API_KEY)
+
+# ─── MongoDB ──────────────────────────────────────────────────────────────────
+mongo_client = MongoClient(MONGO_URI) if MONGO_URI and MONGO_URI != "your_mongodb_atlas_uri_here" else None
+db           = mongo_client["resumeiq"] if mongo_client else None
+users_col    = db["users"] if db else None
 
 # ─── App Setup ────────────────────────────────────────────────────────────────
 
@@ -21,13 +38,40 @@ app = FastAPI(title="Resume Analyzer AI", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://15.206.100.65.nip.io",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# ─── Auth Helpers ─────────────────────────────────────────────────────────────
+
+security = HTTPBearer(auto_error=False)
+
+def create_jwt(payload: dict) -> str:
+    expire = datetime.utcnow() + timedelta(hours=JWT_EXPIRE_HOURS)
+    return jwt.encode({**payload, "exp": expire}, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+def decode_jwt(token: str) -> dict:
+    return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    if not credentials:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    try:
+        payload = decode_jwt(credentials.credentials)
+        return payload
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+
 # ─── Pydantic Models ──────────────────────────────────────────────────────────
+
+class GoogleAuthRequest(BaseModel):
+    credential: str  # Google ID token
 
 class RephraseRequest(BaseModel):
     text: str
@@ -39,7 +83,51 @@ class InterviewQuestionsRequest(BaseModel):
     temperature: float = 0.5
     max_tokens: int = 1024
 
-# ─── Core AI Logic (unchanged from original) ──────────────────────────────────
+# ─── Auth Endpoints ───────────────────────────────────────────────────────────
+
+@app.post("/auth/google")
+async def auth_google(body: GoogleAuthRequest):
+    """Verify Google ID token, upsert user in MongoDB Atlas, return JWT."""
+    try:
+        info = id_token.verify_oauth2_token(
+            body.credential,
+            google_requests.Request(),
+            GOOGLE_CLIENT_ID
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid Google token: {e}")
+
+    user_data = {
+        "googleId": info["sub"],
+        "email":    info.get("email", ""),
+        "name":     info.get("name", ""),
+        "picture":  info.get("picture", ""),
+        "updatedAt": datetime.utcnow(),
+    }
+
+    if users_col is not None:
+        users_col.update_one(
+            {"googleId": info["sub"]},
+            {"$set": user_data, "$setOnInsert": {"createdAt": datetime.utcnow()}},
+            upsert=True
+        )
+
+    token = create_jwt({
+        "sub":     info["sub"],
+        "email":   user_data["email"],
+        "name":    user_data["name"],
+        "picture": user_data["picture"],
+    })
+
+    return {"access_token": token, "token_type": "bearer", "user": user_data}
+
+
+@app.get("/auth/me")
+async def auth_me(current_user: dict = Depends(get_current_user)):
+    """Return current user from JWT."""
+    return current_user
+
+# ─── Core AI Logic ────────────────────────────────────────────────────────────
 
 def extract_text_from_pdf(pdf_path: str) -> str:
     reader = PdfReader(pdf_path)
@@ -60,7 +148,7 @@ def generate_response(message: str, system_prompt: str, temperature: float, max_
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": message}
     ]
-    response = client.chat.completions.create(
+    response = groq_client.chat.completions.create(
         model="llama-3.1-8b-instant",
         messages=conversation,
         temperature=temperature,

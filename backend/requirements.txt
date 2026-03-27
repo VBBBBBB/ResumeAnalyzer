@@ -5,3 +5,8 @@ groq
 PyPDF2
 python-docx
 python-dotenv
+pymongo[srv]
+python-jose[cryptography]
+google-auth
+httpx
+passlib[bcrypt]
