@@ -20,24 +20,6 @@ export default function LandingPage() {
 
   return (
     <div className="landing-page">
-      {/* ── Navbar ── */}
-      <nav className="landing-nav">
-        <div className="landing-logo">
-          <div className="logo-icon">IQ</div>
-          <span className="logo-text">ResumeIQ</span>
-        </div>
-        <div className="nav-links">
-          <Link to="/">Overview</Link>
-          <a href="#features">Features</a>
-          <a href="#roadmap">Roadmap</a>
-          <a href="#faq">FAQ</a>
-          <a href="#about">About</a>
-        </div>
-        <GlowButton onClick={() => navigate('/analyzer')}>
-          Get Started <span className="arrow">→</span>
-        </GlowButton>
-      </nav>
-
       {/* ── Hero Section ── */}
       <section className="hero">
         <motion.h1 
@@ -57,10 +39,9 @@ export default function LandingPage() {
           transition={{ duration: 0.6, delay: 0.4 }}
         >
           <div className="input-wrapper">
-             <span className="sparkles">✨</span>
              <input 
                type="text" 
-               placeholder="A modern art gallery, Magritte and Chagall style.|"
+               placeholder="Optimize my resume for a Software Engineer role..."
                value={prompt}
                onChange={(e) => setPrompt(e.target.value)}
              />

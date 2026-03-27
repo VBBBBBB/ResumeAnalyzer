@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import GlowIcon from './GlowIcon';
 
-export default function GlowNavItem({ to, label, Icon, color, isActive }) {
+export default function GlowNavItem({ to, label, Icon, color, isActive, size = 18 }) {
   return (
     <NavLink 
       to={to} 
@@ -16,7 +16,7 @@ export default function GlowNavItem({ to, label, Icon, color, isActive }) {
           <GlowIcon 
             Icon={Icon} 
             color={color} 
-            size={18} 
+            size={size} 
             className={(linkActive || isActive) ? "glow-active" : ""}
           />
           <span className="nav-label">{label}</span>

@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Sparkles, PenTool, FileText, Brain } from 'lucide-react';
-
 import ResumeAnalyzer from './components/ResumeAnalyzer';
 import ContentRephraser from './components/ContentRephraser';
 import CoverLetterGenerator from './components/CoverLetterGenerator';
@@ -11,6 +9,7 @@ import LandingPage from './components/LandingPage';
 import Orb from './components/Orb';
 import GlowNavItem from './components/GlowNavItem';
 import PageTransition from './components/PageTransition';
+import { Sparkles, PenTool, FileText, Brain, Home } from 'lucide-react';
 
 import './App.css';
 
@@ -128,11 +127,7 @@ function AppContent() {
                       return tab ? <><tab.icon size={20} color={tab.color} /> {tab.label}</> : 'Dashboard';
                     })()}
                   </div>
-                  <GlowNavItem to="/" label="Home" Icon={() => <span>🏠</span>} color="#ffffff" isActive={false} />
-                  <div className="topbar-badge">
-                    <span className="status-dot" />
-                    Connected
-                  </div>
+                  <GlowNavItem to="/" label="Home" Icon={Home} color="#ffffff" isActive={false} size={24} />
                 </header>
               )}
 
