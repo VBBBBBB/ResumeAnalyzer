@@ -5,6 +5,6 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: true,
-    allowedHosts: ['13.206.82.96.nip.io', 'localhost'],
+    allowedHosts: ['52.66.6.111.nip.io', 'localhost'],
   },
 })

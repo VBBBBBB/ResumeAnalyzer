@@ -24,17 +24,10 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (googleCredential) => {
-    try {
-      const res = await axios.post(`${API}/auth/google`, { credential: googleCredential }, { timeout: 10000 });
-      localStorage.setItem('resumeiq_token', res.data.access_token);
-      setUser(res.data.user);
-      return res.data.user;
-    } catch (err) {
-      if (err.code === 'ECONNABORTED') {
-        throw new Error('Connection to backend timed out! Is the server or database slow?');
-      }
-      throw err;
-    }
+    const res = await axios.post(`${API}/auth/google`, { credential: googleCredential });
+    localStorage.setItem('resumeiq_token', res.data.access_token);
+    setUser(res.data.user);
+    return res.data.user;
   };
 
   const logout = () => {

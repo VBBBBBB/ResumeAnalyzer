@@ -40,9 +40,9 @@ app = FastAPI(title="Resume Analyzer AI", version="2.0.0")
 ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "http://13.206.82.96:5173",
-    "http://13.206.82.96.nip.io:5173",
-    "http://13.206.82.96.nip.io",
+    "http://52.66.6.111:5173",
+    "http://52.66.6.111.nip.io:5173",
+    "http://52.66.6.111.nip.io",
 ]
 if FRONTEND_URL:
     ORIGINS.append(FRONTEND_URL)
