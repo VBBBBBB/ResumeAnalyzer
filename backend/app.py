@@ -30,8 +30,8 @@ groq_client = Groq(api_key=GROQ_API_KEY)
 
 # ─── MongoDB ──────────────────────────────────────────────────────────────────
 mongo_client = MongoClient(MONGO_URI) if MONGO_URI and MONGO_URI != "your_mongodb_atlas_uri_here" else None
-db           = mongo_client["resumeiq"] if mongo_client else None
-users_col    = db["users"] if db else None
+db           = mongo_client["resumeiq"] if mongo_client is not None else None
+users_col    = db["users"] if db is not None else None
 
 # ─── App Setup ────────────────────────────────────────────────────────────────
 
