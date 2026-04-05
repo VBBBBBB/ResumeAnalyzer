@@ -21,6 +21,7 @@ load_dotenv()
 GROQ_API_KEY      = os.getenv("GROQ_API_KEY")
 MONGO_URI         = os.getenv("MONGO_URI")
 GOOGLE_CLIENT_ID  = os.getenv("GOOGLE_CLIENT_ID")
+FRONTEND_URL      = os.getenv("FRONTEND_URL")
 JWT_SECRET        = os.getenv("JWT_SECRET", "fallback_secret")
 JWT_ALGORITHM     = os.getenv("JWT_ALGORITHM", "HS256")
 JWT_EXPIRE_HOURS  = int(os.getenv("JWT_EXPIRE_HOURS", "72"))
@@ -36,13 +37,19 @@ users_col    = db["users"] if db else None
 
 app = FastAPI(title="Resume Analyzer AI", version="2.0.0")
 
+ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://13.206.82.96:5173",
+    "http://13.206.82.96.nip.io:5173",
+    "http://13.206.82.96.nip.io",
+]
+if FRONTEND_URL:
+    ORIGINS.append(FRONTEND_URL)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://15.206.100.65.nip.io",
-    ],
+    allow_origins=ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -92,9 +99,11 @@ async def auth_google(body: GoogleAuthRequest):
         info = id_token.verify_oauth2_token(
             body.credential,
             google_requests.Request(),
-            GOOGLE_CLIENT_ID
+            GOOGLE_CLIENT_ID,
+            clock_skew_in_seconds=30
         )
     except ValueError as e:
+        print(f"Token Verify Error: {e}")
         raise HTTPException(status_code=400, detail=f"Invalid Google token: {e}")
 
     user_data = {
