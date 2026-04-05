@@ -5,5 +5,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    allowedHosts: [
+      '13.206.82.96.nip.io',
+      'localhost',
+      '127.0.0.1'
+    ]
   },
 })
