@@ -19,7 +19,7 @@ services:
     depends_on:
       - backend
     environment:
-      - VITE_API_URL=
+      - VITE_API_URL=http://13.206.82.96:8000
     volumes:
       - ./frontend:/app
       - /app/node_modules

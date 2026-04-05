@@ -29,7 +29,7 @@ JWT_EXPIRE_HOURS  = int(os.getenv("JWT_EXPIRE_HOURS", "72"))
 groq_client = Groq(api_key=GROQ_API_KEY)
 
 # ─── MongoDB ──────────────────────────────────────────────────────────────────
-mongo_client = MongoClient(MONGO_URI) if MONGO_URI and MONGO_URI != "your_mongodb_atlas_uri_here" else None
+mongo_client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000) if MONGO_URI and MONGO_URI != "your_mongodb_atlas_uri_here" else None
 db           = mongo_client["resumeiq"] if mongo_client is not None else None
 users_col    = db["users"] if db is not None else None
 
@@ -116,11 +116,15 @@ async def auth_google(body: GoogleAuthRequest):
     }
 
     if users_col is not None:
-        users_col.update_one(
-            {"googleId": info["sub"]},
-            {"$set": user_data, "$setOnInsert": {"createdAt": datetime.utcnow()}},
-            upsert=True
-        )
+        try:
+            # Use a short timeout for the local update to prevent hanging if DB is slow
+            users_col.update_one(
+                {"googleId": info["sub"]},
+                {"$set": user_data, "$setOnInsert": {"createdAt": datetime.utcnow()}},
+                upsert=True
+            )
+        except Exception as e:
+            print(f"Warning: MongoDB update failed: {e}. Proceeding without DB update.")
 
     token = create_jwt({
         "sub":     info["sub"],
