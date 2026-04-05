@@ -1,18 +1,23 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from './AuthContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Login() {
+  const [error, setError] = useState(null);
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSuccess = async (credentialResponse) => {
     try {
+      console.log('Google credential received, attempting login...');
+      console.log('API URL:', import.meta.env.VITE_API_URL || 'http://localhost:8000');
       await login(credentialResponse.credential);
       navigate('/');
     } catch (err) {
       console.error('Login failed:', err);
+      setError(err.response?.data?.detail || err.message || 'Login failed unexpectedly');
     }
   };
 
@@ -100,6 +105,29 @@ export default function Login() {
         >
           Your AI-powered career toolkit
         </motion.p>
+
+        {/* Error Display */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                borderRadius: '12px',
+                padding: '12px',
+                marginBottom: '20px',
+                color: '#ef4444',
+                fontSize: '13px',
+                fontWeight: '500',
+              }}
+            >
+              ⚠️ {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Divider */}
         <div style={{
