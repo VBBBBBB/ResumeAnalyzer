@@ -1,6 +1,7 @@
 fastapi
 uvicorn[standard]
 python-multipart
+requests
 groq
 PyPDF2
 python-docx
@@ -8,5 +9,7 @@ python-dotenv
 pymongo[srv]
 python-jose[cryptography]
 google-auth
+google-auth-oauthlib
 httpx
 passlib[bcrypt]
+dnspython
