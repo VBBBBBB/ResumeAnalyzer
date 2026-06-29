@@ -17,7 +17,7 @@ import { Sparkles, PenTool, FileText, Brain, Home, LogOut } from 'lucide-react';
 
 import './App.css';
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '614948147061-v71bgj604gk5i3l4s5739im343anlt21.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '259918162312-8s95ibf0ljlua56b9buk7d0icnkc1o88.apps.googleusercontent.com';
 
 const TABS = [
   { id: 'analyzer',    label: 'Resume Analyzer',    path: '/analyzer',    icon: Sparkles, color: '#8b5cf6' },
