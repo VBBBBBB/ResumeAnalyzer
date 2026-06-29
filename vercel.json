@@ -1,0 +1,38 @@
+{
+  "builds": [
+    {
+      "src": "backend/app.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/vite"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/auth/(.*)",
+      "dest": "/backend/app.py"
+    },
+    {
+      "src": "/analyze_resume",
+      "dest": "/backend/app.py"
+    },
+    {
+      "src": "/rephrase",
+      "dest": "/backend/app.py"
+    },
+    {
+      "src": "/generate_cover_letter",
+      "dest": "/backend/app.py"
+    },
+    {
+      "src": "/generate_interview_questions",
+      "dest": "/backend/app.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/$1"
+    }
+  ]
+}
