@@ -36,6 +36,8 @@ users_col    = db["users"] if db is not None else None
 # ─── App Setup ────────────────────────────────────────────────────────────────
 
 app = FastAPI(title="Resume Analyzer AI", version="2.0.0")
+from fastapi import APIRouter
+router = APIRouter()
 
 ORIGINS = [
     "http://localhost:5173",
@@ -93,7 +95,7 @@ class InterviewQuestionsRequest(BaseModel):
 
 # ─── Auth Endpoints ───────────────────────────────────────────────────────────
 
-@app.post("/auth/google")
+@router.post("/auth/google")
 async def auth_google(body: GoogleAuthRequest):
     """Verify Google ID token, upsert user in MongoDB Atlas, return JWT."""
     try:
@@ -136,7 +138,7 @@ async def auth_google(body: GoogleAuthRequest):
     return {"access_token": token, "token_type": "bearer", "user": user_data}
 
 
-@app.get("/auth/me")
+@router.get("/auth/me")
 async def auth_me(current_user: dict = Depends(get_current_user)):
     """Return current user from JWT."""
     return current_user
@@ -253,12 +255,12 @@ async def parse_resume_file(file: UploadFile) -> str:
 
 # ─── API Endpoints ────────────────────────────────────────────────────────────
 
-@app.get("/")
+@router.get("/")
 def root():
     return {"message": "Resume Analyzer AI is running. Visit /docs for the API reference."}
 
 
-@app.post("/analyze_resume")
+@router.post("/analyze_resume")
 async def api_analyze_resume(
     file: UploadFile = File(...),
     job_description: str = Form(""),
@@ -278,7 +280,7 @@ async def api_analyze_resume(
     return {"result": result}
 
 
-@app.post("/rephrase")
+@router.post("/rephrase")
 async def api_rephrase(body: RephraseRequest):
     if not body.text.strip():
         return {"error": "Please provide text to rephrase."}
@@ -286,7 +288,7 @@ async def api_rephrase(body: RephraseRequest):
     return {"result": result}
 
 
-@app.post("/generate_cover_letter")
+@router.post("/generate_cover_letter")
 async def api_generate_cover_letter(
     file: UploadFile = File(...),
     job_description: str = Form(""),
@@ -301,13 +303,16 @@ async def api_generate_cover_letter(
     return {"result": result}
 
 
-@app.post("/generate_interview_questions")
+@router.post("/generate_interview_questions")
 async def api_generate_interview_questions(body: InterviewQuestionsRequest):
     if not body.job_description.strip():
         return {"error": "Please provide a job description."}
     result = generate_interview_questions(body.job_description, body.temperature, body.max_tokens)
     return {"result": result}
 
+
+app.include_router(router)
+app.include_router(router, prefix="/api")
 
 if __name__ == "__main__":
     import uvicorn
